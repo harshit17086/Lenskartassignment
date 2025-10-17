@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// crm entities
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  products  products[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  contacts  Contact[]
+  companies Company[]
+  deals     Deal[]
+  activities Activity[]
+  leads     Lead[]
+  notes     Note[]
+}
+
+model Contact {
+  id         String    @id @default(cuid())
+  firstName  String
+  lastName   String
+  address    String?
+  email      String    @unique
+  phone      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  companyId  String?
+  company    Company?  @relation(fields: [companyId], references: [id])
+  deals      Deal[]
+  activities Activity[]
+  notes      Note[]
+}
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  industry    String?
+  website     String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  size        String?   // e.g., "1-10", "11-50", "51-200"
+  revenue     Float?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  contacts    Contact[]
+  deals       Deal[]
+  activities  Activity[]
+  notes       Note[]
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String    @unique
+  phone       String?
+  company     String?
+  jobTitle    String?
+  source      String?   // e.g., "Website", "Referral", "Cold Call"
+  status      String    @default("New") // "New", "Contacted", "Qualified", "Converted", "Lost"
+  score       Int?      // Lead score (0-100)
+  notes       String?
+  convertedToContactId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+enum DealStage {
+  LEAD
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+model Deal {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  value       Float
+  stage       DealStage @default(LEAD)
+  probability Int       @default(0) // 0-100
+  expectedCloseDate DateTime?
+  actualCloseDate   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id])
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id])
+  activities  Activity[]
+  notes       Note[]
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  DEADLINE
+}
+
+enum ActivityStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Activity {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  type        ActivityType
+  status      ActivityStatus @default(PENDING)
+  dueDate     DateTime?
+  completedAt DateTime?
+  priority    String         @default("Medium") // "Low", "Medium", "High"
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  contactId   String?
+  contact     Contact?       @relation(fields: [contactId], references: [id])
+  companyId   String?
+  company     Company?       @relation(fields: [companyId], references: [id])
+  dealId      String?
+  deal        Deal?          @relation(fields: [dealId], references: [id])
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String?
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  contactId   String?
+  contact     Contact? @relation(fields: [contactId], references: [id])
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  dealId      String?
+  deal        Deal?    @relation(fields: [dealId], references: [id])
+}
+
+model products {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
