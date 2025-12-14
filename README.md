@@ -1,4 +1,3 @@
-# MYCREET - CRM System
 
 A full-stack Customer Relationship Management (CRM) system built with modern web technologies.
 
